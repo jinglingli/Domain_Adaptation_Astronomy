@@ -28,6 +28,7 @@
 
 # In[1]:
 
+from __future__ import division
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
@@ -35,16 +36,13 @@ from sklearn import cross_validation as cv
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
 from scipy.stats import sem
-get_ipython().magic(u'matplotlib inline')
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.pyplot import setp
-from __future__ import division
 from matplotlib.lines import Line2D
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans 
 from collections import Counter
-from unbalanced_dataset import SMOTE
 from sklearn.metrics import confusion_matrix
 from itertools import compress
 import pickle
@@ -233,13 +231,13 @@ iter_time2 = 10 #number of iterations where each iteration samples a testing set
 
 #creating feature labels
 feature_file = 'config.dat'
-selected_features = range(1,22)
+class_label = "class"
+selected_features = list(range(1,22))
 selected_features.remove(15)
 len_feature = len(selected_features)
 labels = add_Names(feature_file,selected_features)
 
 #creating selected class types
-class_label = "class"
 classes = {}
 Class_list = 'Class_list'
 for line in open(Class_list):
@@ -268,7 +266,7 @@ Y_Preds_TT = []
 Y_Preds = []
 Y_indexes = []
 for run in range(0,runs):
-    print "run %d" %run
+    print ("run %d" %run)
     Learning_curve = []
     for S_data, T_data, s_name, t_name, checkBoth in [(lineardb, crts, "Lineardb", "CRTS", True),
                                                       (crts, ptfr, "CRTS", "PTF(r)", True),
@@ -282,7 +280,7 @@ for run in range(0,runs):
         source_smaller_class = findSmallestClassSize(S_data, Selected_Class)
         Learning_accuracies, Learning_accuracies_TT, Clf, Feature_importance, Feature_importance_TT, Y_tests, Y_preds, Y_preds_TT, Y_index = Domain_Adaptation23_modified(
             S_data, T_data, clf, target_smaller_class, source_smaller_class, checkBoth)
-        pickle.dump([Learning_accuracies, Feature_importance], open("S+T to T %s-2-%s_run%d.p" % (s_name,t_name, run), "w" ))
+        pickle.dump([Learning_accuracies, Feature_importance], open("S+T to T %s-2-%s_run%d.p" % (s_name,t_name, run), "wb" ))
         Learning_curve.append(Learning_accuracies)
         labels.append("S+T to T %s-2-%s" % (s_name,t_name))
         
@@ -290,7 +288,7 @@ for run in range(0,runs):
             Learning_curve.append(Learning_accuracies_TT)
             labels.append("T to T %s" % t_name)
             Y_Preds_TT.append(Y_preds_TT)
-            pickle.dump([Learning_accuracies_TT, Feature_importance_TT], open("T to T %s_run%d.p" % (t_name,run), "w" ))
+            pickle.dump([Learning_accuracies_TT, Feature_importance_TT], open("T to T %s_run%d.p" % (t_name,run), "wb" ))
         Y_Tests.append(Y_tests)
         Y_Preds.append(Y_preds)
         Y_indexes.append(Y_index)   
@@ -298,7 +296,7 @@ for run in range(0,runs):
 fig = plt.figure(figsize=(18.75,10))
 ax = fig.add_subplot(111)
 curve_plot = np.mean(Learning_curves,axis=0)
-pickle.dump([Learning_curves, labels], open("Learning_curves_w_labels.p", "w" ))
+pickle.dump([Learning_curves, labels], open("Learning_curves_w_labels.p", "wb" ))
 std_err = sem(Learning_curves)
 for index in range(0, curve_plot.shape[0]):
     #ax.plot(range(start_size,end_size,bins), Learning_accuracies, "s-",
@@ -327,7 +325,7 @@ plt.savefig('three_surveys_RF_DA2_3.png')
 def K_fold_cross_validation(K_fold, crts, ptfr, lineardb):
     Y_Tests = []
     Y_Preds = []
-    print "%d_fold cross validation: " %K_fold
+    print ("%d_fold cross validation: " %K_fold)
     for data, name in [(crts,"crts"), (ptfr,"ptfr"), (lineardb,"lineardb")]:
         data = normalize_data_with_label2(data)
         Y_test = []
@@ -365,7 +363,7 @@ def K_fold_cross_validation(K_fold, crts, ptfr, lineardb):
             Y_pred.extend(rfc.predict(test.iloc[:,range(0,len_feature)]))
             Y_test.extend(test[class_label])        
             scores.append(rfc.score(test.iloc[:,range(0,len_feature)], test[class_label]))
-        print "average accuracy for %s is %f" % (name,np.mean(scores))
+        print ("average accuracy for %s is %f" % (name,np.mean(scores)))
         Y_Tests.append(Y_test)       
         Y_Preds.append(Y_pred)
     return Y_Tests, Y_Preds
